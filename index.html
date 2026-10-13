@@ -124,6 +124,29 @@
     .success-star { font-size: 2.4rem; }
     .success-sentence { margin: 15px 0 21px; border-radius: 17px; padding: 16px; background: #e9f9f3; color: #236f62; font-size: clamp(1.2rem,4vw,1.7rem); font-weight: 1000; line-height: 1.35; }
     .success-card .primary-btn { min-width: 170px; }
+    .cloud-game .game-top > .hud-card,
+    .cloud-game .instruction-chip,
+    .cloud-game .camera-hint,
+    .cloud-game .sentence-panel,
+    .cloud-game #finalCountdown,
+    .cloud-game #toast { display: none !important; }
+    .cloud-game-hud { position: absolute; z-index: 5; top: max(68px, calc(env(safe-area-inset-top) + 68px)); left: 50%; transform: translateX(-50%); display: none; width: min(calc(100% - 24px), 590px); padding: 12px 16px; border: 1px solid rgba(255,255,255,.5); border-radius: 20px; color: #35275f; background: rgba(255,253,248,.94); box-shadow: 0 9px 28px rgba(21,13,54,.22); backdrop-filter: blur(9px); }
+    .cloud-game-hud.show { display: block; }
+    .cloud-hud-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .cloud-game-title { color: #6242bb; font-size: .78rem; font-weight: 1000; letter-spacing: .08em; text-transform: uppercase; }
+    .cloud-game-subtitle { margin-top: 3px; font-weight: 950; font-size: .92rem; }
+    .cloud-stat { min-width: 72px; text-align: center; border-radius: 13px; padding: 7px 10px; background: #f0eaff; }
+    .cloud-stat small { display: block; color: #8171ad; font-size: .61rem; font-weight: 1000; letter-spacing: .07em; text-transform: uppercase; }
+    .cloud-stat strong { display: block; color: #39266f; font-size: 1.22rem; line-height: 1.1; }
+    #cloudGameTimer.urgent { color: #df3d65; animation: pulse .7s infinite alternate; }
+    .cloud-game-guide { margin: 8px 0 0; color: #625a7e; text-align: center; font-size: .78rem; font-weight: 850; line-height: 1.35; }
+    .cloud-game-end { position: absolute; z-index: 8; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(38,25,79,.66); backdrop-filter: blur(6px); }
+    .cloud-game-end.show { display: flex; }
+    .cloud-game-end-card { width: min(100%, 430px); border: 3px solid #ffe486; border-radius: 27px; padding: 28px 22px; color: #35275f; background: #fffdf8; text-align: center; box-shadow: 0 20px 55px rgba(18,10,48,.34); }
+    .cloud-game-end-card h2 { margin: 8px 0; color: #30205f; font-size: clamp(1.7rem,5vw,2.3rem); }
+    .cloud-game-end-card p { margin: 0; color: #625a7e; line-height: 1.45; }
+    .cloud-final-height { margin: 15px auto 10px; border-radius: 16px; padding: 12px; color: #236f62; background: #e9f9f3; font-size: 1.2rem; font-weight: 1000; }
+    .cloud-game-end-note { font-size: .8rem; }
 
     /* Results */
     #results { position: relative; overflow-y: auto; justify-content: center; align-items: center; padding: 24px 16px; background: linear-gradient(145deg,#6d44d8,#a95ed0 54%,#fa81ad); }
@@ -165,6 +188,10 @@
       .sentence-panel { left: 9px; right: 9px; padding: 11px 9px 13px; }
       .slot { min-width: 38px; font-size: .78rem; padding: 5px 7px; }
       .camera-hint { top: 43%; }
+      .cloud-game-hud { top: max(63px, calc(env(safe-area-inset-top) + 63px)); padding: 10px 11px; }
+      .cloud-game-subtitle { font-size: .82rem; }
+      .cloud-stat { min-width: 62px; padding: 6px 7px; }
+      .cloud-game-guide { font-size: .71rem; }
     }
     @media (max-width: 390px) {
       .player-form { grid-template-columns: 1fr; }
@@ -194,6 +221,7 @@
         <div class="rule"><span class="rule-icon">🧩</span><span>Study the words for 15 seconds, then catch them in sentence order. Only words from this question will fall.</span></div>
         <div class="rule"><span class="rule-icon">🔄</span><span>If you catch the wrong word, start the sentence again and lose 3 seconds.</span></div>
         <div class="rule"><span class="rule-icon">⏱️</span><span>Complete each question in 60 seconds to earn one point.</span></div>
+        <div class="rule"><span class="rule-icon">☁️</span><span>After each question, play a 20-second cloud-jump bonus game. It gives no extra points. If scores are tied, the shorter answer time ranks higher.</span></div>
       </div>
       <form id="playerForm" class="player-form">
         <div class="field"><label for="studentName">Student name</label><input id="studentName" name="studentName" autocomplete="name" maxlength="60" placeholder="Example: Aina" required></div>
@@ -231,6 +259,17 @@
       <div class="sentence-caption">Your sentence</div>
       <div id="sentenceSlots" aria-live="polite"></div>
     </div>
+    <div id="cloudGameHud" class="cloud-game-hud" aria-live="polite">
+      <div class="cloud-hud-row">
+        <div><div class="cloud-game-title">☁️ Bonus Cloud Jump</div><div class="cloud-game-subtitle" id="cloudGameRound">After Question 1</div></div>
+        <div class="cloud-stat"><small>Time</small><strong id="cloudGameTimer">20</strong></div>
+        <div class="cloud-stat"><small>Height</small><strong id="cloudGameHeight">0 m</strong></div>
+      </div>
+      <p class="cloud-game-guide" id="cloudGameGuide">Move your head left or right to steer the automatic jump onto the clouds. No extra points!</p>
+    </div>
+    <div id="cloudGameFinish" class="cloud-game-end" aria-live="polite">
+      <div class="cloud-game-end-card"><div class="success-star" aria-hidden="true">☁️</div><h2>Cloud game complete!</h2><p>Your highest jump was:</p><div id="cloudFinalHeight" class="cloud-final-height">0 m</div><p class="cloud-game-end-note">This bonus game does not add points to your score.</p></div>
+    </div>
     <div id="previewPanel" class="intermission-overlay" aria-live="polite">
       <div class="intermission-card preview-card">
         <div class="intermission-kicker">Question preview</div>
@@ -262,7 +301,7 @@
       <p class="result-subtitle" id="resultClass">Your game results</p>
       <div class="score-grid">
         <div class="score-box"><small>Score</small><strong id="scoreValue">0 / 7</strong></div>
-        <div class="score-box"><small>Fastest time</small><strong id="fastestValue">—</strong></div>
+        <div class="score-box"><small>Answer time · tie-break</small><strong id="tieBreakValue">0s</strong></div>
       </div>
       <ul id="resultList" class="result-list"></ul>
       <div id="deliveryBox" class="delivery-box">Preparing your results…</div>
@@ -270,7 +309,7 @@
         <button id="copyResults" class="secondary-btn" type="button">Copy results</button>
         <button id="playAgain" class="primary-btn" type="button">Play again ↻</button>
       </div>
-      <div class="footnote">Your results include your name, class, score, time and answer for each question. Your camera video is not included.</div>
+      <div class="footnote">Ranking: higher score first; if scores are tied, the shorter total answer time ranks higher. Cloud-jump games do not add points. Your camera video is not recorded or sent.</div>
     </div>
   </section>
 
@@ -297,6 +336,10 @@
     let falling = [], basket = { x: 0, y: 0, targetX: 0, targetY: 0 }, lastFrame = 0, lastDetect = 0;
     let stageWidth = 0, stageHeight = 0, lastSecond = -1, previewDeadline = 0, toastTimer = null, transitionTimer = null, speechToken = 0;
     let keyboardControl = false;
+    let totalQuestionTimeMs = 0, currentQuestionResult = null, cloudGames = [];
+    let cloudGameActive = false, cloudGameStart = 0, cloudGameEnd = 0, cloudLastSecond = 21;
+    let cloudScrollY = 0, cloudBaseY = 0, cloudBestY = 0, cloudPlatforms = [], cloudLastSafePlatform = null, cloudSteer = 0;
+    const cloudHero = { x: 0, y: 0, vx: 0, vy: 0, width: 34, height: 48 };
     let audioContext = null, musicGain = null, sfxGain = null, musicTimer = null, musicStep = 0, musicNextTime = 0, soundEnabled = true, lastCountdown = -1;
     const MUSIC_MELODY = [523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,523.25,659.25,783.99,1046.5,493.88,587.33,783.99,659.25];
     const MUSIC_BASS = [130.81,110,87.31,98];
@@ -375,6 +418,7 @@
         catch: [[783.99,.08],[1046.5,.12]],
         wrong: [[246.94,.12],[185,.16]],
         success: [[523.25,.12],[659.25,.12],[783.99,.15],[1046.5,.22]],
+        hop: [[587.33,.06],[880,.12]],
         timeout: [[698.46,.12],[523.25,.12],[392,.2]]
       };
       if (name === "countdown") {
@@ -422,6 +466,8 @@
     }
     function startQuestion(index) {
       if (index >= QUESTIONS.length) { finishGame(); return; }
+      cloudGameActive = false; $("cloudGameHud").classList.remove("show"); $("cloudGameFinish").classList.remove("show"); stage.classList.remove("cloud-game");
+      currentQuestionResult = null;
       questionIndex = index; nextWordIndex = 0; mistakes = 0; falling = []; active = false; transitioning = true; previewing = true;
       questionStart = 0; deadline = 0; previewDeadline = performance.now() + 15000; lastSecond = -1; lastCountdown = -1;
       $("finalCountdown").classList.remove("show");
@@ -451,8 +497,11 @@
     function completeQuestion() {
       if (!active) return;
       active = false; transitioning = true; falling = [];
-      const seconds = Math.max(1, Math.round((performance.now() - questionStart) / 1000));
-      results.push({ question: questionIndex + 1, correct: true, answer: QUESTIONS[questionIndex].answer, seconds, mistakes });
+      const elapsedMs = Math.max(0, performance.now() - questionStart);
+      totalQuestionTimeMs += elapsedMs;
+      const seconds = Math.max(1, Math.round(elapsedMs / 1000));
+      currentQuestionResult = { question: questionIndex + 1, correct: true, answer: QUESTIONS[questionIndex].answer, seconds, timeUsedSeconds: seconds, mistakes, cloudHeightMeters: null };
+      results.push(currentQuestionResult);
       $("finalCountdown").classList.remove("show"); playSound("success");
       if (audioContext && musicGain && soundEnabled) musicGain.gain.setTargetAtTime(.14, audioContext.currentTime, .08);
       $("successSentence").textContent = QUESTIONS[questionIndex].answer;
@@ -481,15 +530,141 @@
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       $("successPanel").classList.remove("show");
       if (audioContext && musicGain && soundEnabled) musicGain.gain.setTargetAtTime(.55, audioContext.currentTime, .18);
-      startQuestion(questionIndex + 1);
+      beginCloudGame();
     }
     function timeoutQuestion() {
       if (!active) return;
       active = false; transitioning = true; falling = [];
       $("finalCountdown").classList.remove("show"); playSound("timeout");
-      results.push({ question: questionIndex + 1, correct: false, answer: QUESTIONS[questionIndex].answer, seconds: null, mistakes });
+      const elapsedMs = Math.max(0, performance.now() - questionStart);
+      totalQuestionTimeMs += elapsedMs;
+      currentQuestionResult = { question: questionIndex + 1, correct: false, answer: QUESTIONS[questionIndex].answer, seconds: null, timeUsedSeconds: Math.max(1, Math.round(elapsedMs / 1000)), mistakes, cloudHeightMeters: null };
+      results.push(currentQuestionResult);
       showToast("Time's up! No point for this question.", 1400);
-      transitionTimer = setTimeout(() => startQuestion(questionIndex + 1), 1500);
+      transitionTimer = setTimeout(beginCloudGame, 1500);
+    }
+    function getCloudHeight() {
+      return Math.max(0, Math.floor((cloudBaseY - cloudBestY) / 100));
+    }
+    function makeCloudPlatform(y, previousX) {
+      const maxStep = Math.min(140, Math.max(62, stageWidth * .23));
+      const x = Math.max(62, Math.min(stageWidth - 62, previousX + (Math.random() * 2 - 1) * maxStep));
+      return { x, y, width: Math.min(126, Math.max(96, stageWidth * .32)) };
+    }
+    function beginCloudGame() {
+      clearTimeout(transitionTimer);
+      active = false; previewing = false; transitioning = true; falling = [];
+      $("successPanel").classList.remove("show"); $("previewPanel").classList.remove("show");
+      $("cloudGameFinish").classList.remove("show"); $("cloudGameHud").classList.add("show");
+      stage.classList.add("cloud-game");
+      cloudGameActive = true; cloudGameStart = performance.now(); cloudGameEnd = cloudGameStart + 20000; cloudLastSecond = 21;
+      cloudSteer = 0; cloudScrollY = 0; cloudBaseY = stageHeight - 132; cloudBestY = cloudBaseY - cloudHero.height / 2;
+      cloudPlatforms = [{ x: stageWidth / 2, y: cloudBaseY, width: Math.min(172, stageWidth - 50), base: true }];
+      let previousX = stageWidth / 2;
+      for (let i = 1; i <= 9; i++) {
+        const platform = makeCloudPlatform(cloudBaseY - i * 86, previousX);
+        cloudPlatforms.push(platform); previousX = platform.x;
+      }
+      cloudLastSafePlatform = cloudPlatforms[0];
+      cloudHero.x = stageWidth / 2; cloudHero.y = cloudBaseY - cloudHero.height / 2; cloudHero.vx = 0; cloudHero.vy = -520;
+      $("cloudGameRound").textContent = "After Question " + (questionIndex + 1);
+      $("cloudGameTimer").textContent = "20"; $("cloudGameTimer").classList.remove("urgent");
+      $("cloudGameHeight").textContent = "0 m";
+      $("cloudGameGuide").textContent = trackingReady
+        ? "Move your head left or right to steer the automatic jump onto the clouds. No extra points!"
+        : "Move your pointer or use the left and right arrow keys to guide the automatic jump. No extra points!";
+    }
+    function updateCloudGame(dt, now) {
+      const remaining = Math.max(0, (cloudGameEnd - now) / 1000);
+      const seconds = Math.ceil(remaining);
+      if (seconds !== cloudLastSecond) {
+        $("cloudGameTimer").textContent = String(seconds);
+        $("cloudGameTimer").classList.toggle("urgent", seconds <= 5);
+        if (seconds > 0 && seconds <= 5) playSound("countdown", seconds);
+        cloudLastSecond = seconds;
+      }
+      const maxSpeed = Math.min(430, Math.max(230, stageWidth * .8));
+      cloudHero.vx += (cloudSteer * maxSpeed - cloudHero.vx) * Math.min(1, dt * 8);
+      cloudHero.x = Math.max(25, Math.min(stageWidth - 25, cloudHero.x + cloudHero.vx * dt));
+      const previousBottom = cloudHero.y + cloudHero.height / 2;
+      cloudHero.vy += 1320 * dt;
+      cloudHero.y += cloudHero.vy * dt;
+      const currentBottom = cloudHero.y + cloudHero.height / 2;
+      if (cloudHero.vy > 0) {
+        for (const platform of cloudPlatforms) {
+          const overlaps = cloudHero.x + cloudHero.width * .36 > platform.x - platform.width / 2
+            && cloudHero.x - cloudHero.width * .36 < platform.x + platform.width / 2;
+          if (overlaps && previousBottom <= platform.y && currentBottom >= platform.y) {
+            cloudHero.y = platform.y - cloudHero.height / 2; cloudHero.vy = -520;
+            cloudLastSafePlatform = platform; playSound("hop");
+            break;
+          }
+        }
+      }
+      cloudBestY = Math.min(cloudBestY, cloudHero.y);
+      $("cloudGameHeight").textContent = getCloudHeight() + " m";
+      let topPlatform = cloudPlatforms.reduce((top, platform) => platform.y < top.y ? platform : top, cloudPlatforms[0]);
+      while (topPlatform.y > cloudHero.y - stageHeight * 1.15) {
+        const next = makeCloudPlatform(topPlatform.y - 86, topPlatform.x);
+        cloudPlatforms.push(next); topPlatform = next;
+      }
+      const screenY = cloudHero.y + cloudScrollY;
+      const followLine = stageHeight * .45;
+      if (screenY < followLine) cloudScrollY += (followLine - screenY) * Math.min(1, dt * 7);
+      if (cloudHero.y + cloudScrollY > stageHeight + 75 && cloudLastSafePlatform) {
+        cloudHero.x = cloudLastSafePlatform.x;
+        cloudHero.y = cloudLastSafePlatform.y - cloudHero.height / 2;
+        cloudHero.vx = 0; cloudHero.vy = -520;
+        cloudScrollY = Math.max(0, stageHeight * .58 - cloudHero.y);
+      }
+      if (remaining <= 0) finishCloudGame();
+    }
+    function drawCloudPlatforms() {
+      for (const platform of cloudPlatforms) {
+        const y = platform.y + cloudScrollY;
+        if (y < -60 || y > stageHeight + 60) continue;
+        const w = platform.width;
+        ctx.save(); ctx.translate(platform.x, y);
+        ctx.shadowColor = "rgba(25,14,58,.22)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+        ctx.fillStyle = platform.base ? "#ffe798" : "#f5ffff";
+        ctx.strokeStyle = platform.base ? "#f2b84e" : "#9fe5df"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(-w / 2, -1, w, 17, 9); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(-w * .27, 0, 13, Math.PI, 0); ctx.arc(0, -4, 19, Math.PI, 0); ctx.arc(w * .27, 0, 13, Math.PI, 0); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+    }
+    function drawCubeHero() {
+      const y = cloudHero.y + cloudScrollY;
+      ctx.save(); ctx.translate(Math.round(cloudHero.x), Math.round(y));
+      if (cloudHero.vx < -8) ctx.scale(-1, 1);
+      ctx.shadowColor = "rgba(20,12,54,.4)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+      // Original pixel-style cloud explorer; no external character artwork is used.
+      ctx.fillStyle = "#8c382d"; ctx.fillRect(-17, -27, 34, 30);
+      ctx.fillStyle = "#e9a56b"; ctx.fillRect(-13, -25, 26, 22);
+      ctx.fillStyle = "#d84952"; ctx.fillRect(-18, -34, 36, 8); ctx.fillRect(-12, -41, 26, 8); ctx.fillRect(8, -31, 12, 6);
+      ctx.fillStyle = "#fff8e9"; ctx.fillRect(3, -20, 7, 8);
+      ctx.fillStyle = "#34254b"; ctx.fillRect(6, -18, 3, 5);
+      ctx.fillStyle = "#744131"; ctx.fillRect(-9, -11, 18, 5); ctx.fillRect(-5, -7, 10, 3);
+      ctx.fillStyle = "#3887c9"; ctx.fillRect(-14, -3, 28, 17); ctx.fillRect(-19, 0, 6, 12); ctx.fillRect(13, 0, 6, 12);
+      ctx.fillStyle = "#ffdb65"; ctx.fillRect(-8, 1, 5, 5); ctx.fillRect(4, 1, 5, 5);
+      ctx.fillStyle = "#285181"; ctx.fillRect(-13, 14, 11, 10); ctx.fillRect(3, 14, 11, 10);
+      ctx.fillStyle = "#493552"; ctx.fillRect(-15, 22, 14, 5); ctx.fillRect(2, 22, 14, 5);
+      ctx.restore();
+    }
+    function finishCloudGame() {
+      if (!cloudGameActive) return;
+      cloudGameActive = false;
+      const heightMeters = getCloudHeight();
+      if (currentQuestionResult) currentQuestionResult.cloudHeightMeters = heightMeters;
+      cloudGames.push({ afterQuestion: questionIndex + 1, durationSeconds: 20, heightMeters });
+      $("cloudGameTimer").textContent = "0"; $("cloudGameTimer").classList.remove("urgent");
+      $("cloudGameHud").classList.remove("show");
+      $("cloudFinalHeight").textContent = heightMeters + " m";
+      $("cloudGameFinish").classList.add("show"); playSound("success");
+      transitionTimer = setTimeout(() => {
+        $("cloudGameFinish").classList.remove("show");
+        startQuestion(questionIndex + 1);
+      }, 1800);
     }
     function catchWord(word) {
       if (!active || transitioning) return;
@@ -530,13 +705,22 @@
       try {
         const detected = landmarker.detectForVideo(video, now);
         const face = detected.faceLandmarks?.[0];
-        if (!face) { $("cameraHint").textContent = "Make sure your face is visible"; return; }
+        if (!face) {
+          if (cloudGameActive) $("cloudGameGuide").textContent = "Keep your face in view and move your head left or right to steer.";
+          else $("cameraHint").textContent = "Make sure your face is visible";
+          return;
+        }
         const anchor = face[10] || face[1];
         const vw = video.videoWidth, vh = video.videoHeight;
         const scale = Math.max(stageWidth / vw, stageHeight / vh);
         const offsetX = (stageWidth - vw * scale) / 2;
         const offsetY = (stageHeight - vh * scale) / 2;
         const x = (1 - anchor.x) * vw * scale + offsetX;
+        if (cloudGameActive) {
+          cloudSteer = Math.max(-1, Math.min(1, (x - stageWidth / 2) / (stageWidth * .42)));
+          $("cloudGameGuide").textContent = "Move your head left or right to steer the automatic jump onto the clouds. No extra points!";
+          return;
+        }
         const y = anchor.y * vh * scale + offsetY - 5;
         basket.targetX = Math.max(48, Math.min(stageWidth - 48, x));
         basket.targetY = Math.max(100, Math.min(stageHeight - 125, y));
@@ -575,7 +759,7 @@
       if (!stageWidth || !stageHeight) resizeCanvas();
       const dt = Math.min(.05, lastFrame ? (now-lastFrame)/1000 : .016); lastFrame = now;
       updateTracking(now);
-      basket.x += (basket.targetX - basket.x) * .24; basket.y += (basket.targetY - basket.y) * .24;
+      if (!cloudGameActive) { basket.x += (basket.targetX - basket.x) * .24; basket.y += (basket.targetY - basket.y) * .24; }
       ctx.clearRect(0,0,stageWidth,stageHeight);
       // Tiny floating starbursts add a playful look without hiding the camera view.
       for (let i=0;i<12;i++) {
@@ -583,7 +767,10 @@
         ctx.globalAlpha=.18; ctx.fillStyle=i%2 ? "#fff0a2" : "#c8fff1"; ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
       }
       ctx.globalAlpha=1;
-      if (active) {
+      if (cloudGameActive) {
+        updateCloudGame(dt, now);
+        drawCloudPlatforms(); drawCubeHero();
+      } else if (active) {
         const remain = Math.max(0,(deadline-now)/1000);
         const shown = Math.ceil(remain);
         if (shown !== lastSecond) { $("timer").textContent = formatTime(remain); $("timer").classList.toggle("urgent", remain <= 10); lastSecond=shown; }
@@ -605,13 +792,13 @@
         }
         if (active && falling.length===0) spawnWave();
       }
-      if (previewing) {
+      if (!cloudGameActive && previewing) {
         const remaining = Math.max(0, previewDeadline - now);
         const seconds = Math.ceil(remaining / 1000);
         $("previewCountdown").textContent = `Starting in ${seconds} second${seconds === 1 ? "" : "s"}…`;
         if (remaining <= 0) beginTimedQuestion();
       }
-      falling.forEach(drawWord); drawBasket();
+      if (!cloudGameActive) { falling.forEach(drawWord); drawBasket(); }
       requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
@@ -635,11 +822,11 @@
       }
       $("loadingCover").classList.remove("show");
       basket.x=stageWidth/2; basket.y=stageHeight*.55; basket.targetX=basket.x; basket.targetY=basket.y;
-      results=[]; startQuestion(0);
+      results=[]; cloudGames=[]; totalQuestionTimeMs=0; startQuestion(0);
     });
     $("resetButton").addEventListener("click", () => {
       if (!confirm("Start again from Question 1? Your current score and progress will be cleared.")) return;
-      clearTimeout(transitionTimer); results=[]; falling=[]; speechToken++; if ("speechSynthesis" in window) window.speechSynthesis.cancel(); startQuestion(0); showToast("Starting again from Question 1!");
+      clearTimeout(transitionTimer); results=[]; cloudGames=[]; totalQuestionTimeMs=0; currentQuestionResult=null; cloudGameActive=false; $("cloudGameHud").classList.remove("show"); $("cloudGameFinish").classList.remove("show"); stage.classList.remove("cloud-game"); falling=[]; speechToken++; if ("speechSynthesis" in window) window.speechSynthesis.cancel(); startQuestion(0); showToast("Starting again from Question 1!");
     });
     $("soundButton").addEventListener("click", async () => {
       soundEnabled = !soundEnabled; updateSoundButton();
@@ -650,10 +837,16 @@
     });
     $("continueButton").addEventListener("click", advanceAfterSuccess);
     stage.addEventListener("pointermove", event => {
-      if (!trackingReady && stage.classList.contains("active")) { basket.targetX=event.clientX; basket.targetY=event.clientY; }
+      if (!trackingReady && stage.classList.contains("active")) {
+        if (cloudGameActive) cloudSteer=Math.max(-1,Math.min(1,(event.clientX-stageWidth/2)/(stageWidth*.42)));
+        else { basket.targetX=event.clientX; basket.targetY=event.clientY; }
+      }
     });
     window.addEventListener("keydown", event => {
       if (!stage.classList.contains("active")) return;
+      if (cloudGameActive && ["ArrowLeft","ArrowRight"].includes(event.key)) {
+        event.preventDefault(); cloudSteer=event.key==="ArrowLeft"?-1:1; return;
+      }
       const delta=42;
       if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)) { event.preventDefault(); keyboardControl=true; }
       if (event.key==="ArrowLeft") basket.targetX=Math.max(45,basket.targetX-delta);
@@ -661,8 +854,12 @@
       if (event.key==="ArrowUp") basket.targetY=Math.max(100,basket.targetY-delta);
       if (event.key==="ArrowDown") basket.targetY=Math.min(stageHeight-125,basket.targetY+delta);
     });
+    window.addEventListener("keyup", event => {
+      if (cloudGameActive && ["ArrowLeft","ArrowRight"].includes(event.key)) cloudSteer=0;
+    });
     function buildPayload() {
       const successful = results.filter(r=>r.correct);
+      const totalQuestionTimeSeconds = Math.max(0, Math.round(totalQuestionTimeMs / 1000));
       return {
         game: "Word Catcher — English Year 2",
         name: player.name,
@@ -670,7 +867,10 @@
         score: successful.length,
         totalQuestions: QUESTIONS.length,
         fastestQuestionSeconds: successful.length ? Math.min(...successful.map(r=>r.seconds)) : null,
-        totalCorrectTimeSeconds: successful.reduce((sum,r)=>sum+r.seconds,0),
+        totalQuestionTimeSeconds,
+        totalCorrectTimeSeconds: totalQuestionTimeSeconds,
+        rankingRule: "Higher score ranks first; when scores are tied, the lower total question answer time ranks higher.",
+        cloudGames,
         completedAt: new Date().toISOString(),
         questions: results
       };
@@ -691,24 +891,24 @@
       }
     }
     function makeResultText(payload) {
-      const lines=[`Word Catcher — ${payload.name} (${payload.className})`,`Score: ${payload.score}/${payload.totalQuestions}`,`Fastest time: ${payload.fastestQuestionSeconds == null ? "None" : payload.fastestQuestionSeconds + " seconds"}`,"Answers:"];
-      payload.questions.forEach(r=>lines.push(`Question ${r.question}: ${r.correct ? "Correct — "+r.answer+" ("+r.seconds+" seconds)" : "No point — time ran out"}; resets: ${r.mistakes}`));
+      const lines=["Word Catcher — "+payload.name+" ("+payload.className+")","Score: "+payload.score+"/"+payload.totalQuestions,"Total answer time: "+payload.totalQuestionTimeSeconds+" seconds","Ranking: higher score first; shorter answer time breaks a tie.","Answers:"];
+      payload.questions.forEach(r=>lines.push("Question "+r.question+": "+(r.correct ? "Correct — "+r.answer+" ("+r.seconds+" seconds)" : "No point — time ran out ("+r.timeUsedSeconds+" seconds)")+"; resets: "+r.mistakes+"; cloud height: "+(r.cloudHeightMeters == null ? "not played" : r.cloudHeightMeters+" m")));
+      (payload.cloudGames || []).forEach(g=>lines.push("Cloud game after Question "+g.afterQuestion+": "+g.heightMeters+" m (no extra points)"));
       return lines.join("\n");
     }
     async function finishGame() {
-      active=false; transitioning=false; falling=[]; stopCamera();
+      active=false; transitioning=false; cloudGameActive=false; falling=[]; stopCamera(); $("cloudGameHud").classList.remove("show"); $("cloudGameFinish").classList.remove("show"); stage.classList.remove("cloud-game");
       $("finalCountdown").classList.remove("show"); stopBackgroundMusic();
       const payload=buildPayload();
       $("resultName").textContent=player.name; $("resultClass").textContent=`Class ${player.className} · Thanks for playing!`;
       $("scoreValue").textContent=`${payload.score} / 7`;
-      if (payload.fastestQuestionSeconds == null) $("fastestValue").textContent="—";
-      else $("fastestValue").textContent=`${payload.fastestQuestionSeconds}s · S${results.find(r=>r.correct&&r.seconds===payload.fastestQuestionSeconds)?.question}`;
+      $("tieBreakValue").textContent=payload.totalQuestionTimeSeconds+"s";
       const list=$("resultList"); list.replaceChildren();
       results.forEach(r=>{
         const li=document.createElement("li"); li.className=`result-row${r.correct?" good":""}`;
         const badge=document.createElement("span"); badge.className="badge"; badge.textContent=r.correct?"✓":"–";
-        const label=document.createElement("span"); label.textContent=`Question ${r.question}: ${r.answer}`;
-        const time=document.createElement("strong"); time.textContent=r.correct?`${r.seconds}s · ${r.mistakes} resets`:`Time's up · ${r.mistakes} resets`;
+        const label=document.createElement("span"); label.textContent="Question "+r.question+": "+r.answer+" · Cloud height "+(r.cloudHeightMeters ?? 0)+" m";
+        const time=document.createElement("strong"); time.textContent=r.correct ? r.seconds+"s · "+r.mistakes+" resets" : "Time's up · "+r.timeUsedSeconds+"s · "+r.mistakes+" resets";
         li.append(badge,label,time); list.appendChild(li);
       });
       showScreen("results"); await sendResults(payload);
@@ -719,7 +919,7 @@
       catch { window.prompt("Copy these results:",text); }
     });
     $("playAgain").addEventListener("click", () => {
-      results=[]; nextWordIndex=0; falling=[]; showScreen("welcome");
+      results=[]; cloudGames=[]; totalQuestionTimeMs=0; currentQuestionResult=null; cloudGameActive=false; nextWordIndex=0; falling=[]; showScreen("welcome");
       $("studentName").value=player.name; $("studentClass").value=player.className;
     });
   </script>
