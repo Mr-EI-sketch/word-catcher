@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6d44d8">
-  <title>Word Catcher — English Year 2 Proaktif</title>
+  <title>Word Catcher — English Year 2</title>
   <style>
     :root {
       --ink: #211b45;
@@ -88,6 +88,11 @@
     .top-actions { display: flex; gap: 8px; align-items: center; }
     .status-pill { max-width: 185px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; background: rgba(35,23,76,.74); border: 1px solid rgba(255,255,255,.28); color: white; border-radius: 99px; padding: 9px 12px; font-size: .74rem; font-weight: 900; box-shadow: 0 7px 20px rgba(20,12,45,.2); }
     .reset-btn { border: 1px solid rgba(255,255,255,.5); color: #3d2c67; background: #fffdf8; border-radius: 13px; padding: 10px 12px; font-weight: 950; box-shadow: 0 6px 16px rgba(25,17,53,.16); }
+    .sound-btn { border: 1px solid rgba(255,255,255,.5); color: #3d2c67; background: #fffdf8; border-radius: 13px; padding: 10px 11px; font-size: .8rem; font-weight: 950; box-shadow: 0 6px 16px rgba(25,17,53,.16); }
+    .sound-btn.muted { color: #665b7c; background: #e8e3ef; }
+    .countdown-number { position: absolute; z-index: 5; top: 38%; left: 50%; display: none; place-items: center; width: clamp(116px,25vw,190px); aspect-ratio: 1; border: 5px solid rgba(255,255,255,.86); border-radius: 50%; color: #34215e; background: radial-gradient(circle at 35% 28%,#fff7c8,#ffc94f 72%); box-shadow: 0 14px 44px rgba(21,13,54,.42), inset 0 0 0 7px rgba(255,255,255,.32); font-size: clamp(4.2rem,14vw,7.5rem); font-weight: 1000; line-height: 1; text-shadow: 0 3px 0 rgba(255,255,255,.55); transform: translate(-50%,-50%) scale(.72); }
+    .countdown-number.show { display: grid; animation: countdown-pop .82s cubic-bezier(.2,.8,.25,1); }
+    @keyframes countdown-pop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(1.3); } 22% { opacity: 1; } 72% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.82); } }
     .instruction-chip { position: absolute; z-index: 2; top: 95px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 28px); border-radius: 99px; padding: 10px 15px; text-align: center; color: white; font-weight: 900; font-size: clamp(.76rem,2vw,.92rem); background: rgba(48,35,95,.66); border: 1px solid rgba(255,255,255,.25); backdrop-filter: blur(8px); }
     .sentence-panel { position: absolute; z-index: 3; left: 14px; right: 14px; bottom: max(15px, env(safe-area-inset-bottom)); margin: auto; max-width: 720px; border-radius: 23px; padding: 13px 16px 15px; text-align: center; background: rgba(255,253,248,.95); border: 2px solid rgba(255,255,255,.66); box-shadow: 0 12px 35px rgba(21,13,54,.22); }
     .sentence-caption { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 1000; color: #8a7baa; margin-bottom: 7px; }
@@ -156,6 +161,7 @@
       .hud-card { padding: 9px 11px; border-radius: 15px; }
       .status-pill { display: none; }
       .reset-btn { padding: 10px 9px; font-size: .78rem; }
+      .sound-btn { padding: 10px 8px; font-size: .72rem; }
       .sentence-panel { left: 9px; right: 9px; padding: 11px 9px 13px; }
       .slot { min-width: 38px; font-size: .78rem; padding: 5px 7px; }
       .camera-hint { top: 43%; }
@@ -174,7 +180,7 @@
     <div class="blob one"></div><div class="blob two"></div>
     <div class="welcome-card">
       <div>
-        <div class="brand"><span class="brand-icon">🧺</span> English Year 2 Proaktif</div>
+        <div class="brand"><span class="brand-icon">🧺</span> English Year 2</div>
         <h1>Word<br><span>Catcher!</span></h1>
         <p class="lead">Catch the correct words to build sentences about jobs. Move your head to guide the basket!</p>
         <div class="hero-art" aria-hidden="true">
@@ -213,11 +219,13 @@
       </div>
       <div class="top-actions">
         <div class="status-pill" id="cameraStatus">Connecting camera…</div>
+        <button class="sound-btn" id="soundButton" type="button" aria-pressed="true" title="Turn game sounds off">🔊 Sound on</button>
         <button class="reset-btn" id="resetButton" type="button" title="Start again from Question 1">↻ Reset</button>
       </div>
     </div>
     <div class="instruction-chip">Catch the next word in the sentence 👇</div>
     <div class="camera-hint" id="cameraHint">Make sure your face is visible</div>
+    <div id="finalCountdown" class="countdown-number" aria-live="assertive" aria-label="Time remaining"></div>
     <div id="toast" role="status" aria-live="polite"></div>
     <div class="sentence-panel">
       <div class="sentence-caption">Your sentence</div>
@@ -249,7 +257,7 @@
 
   <section id="results" class="screen" aria-label="Game results">
     <div class="result-card">
-      <div class="result-kicker">English Year 2 Proaktif · Word Catcher</div>
+      <div class="result-kicker">English Year 2 · Word Catcher</div>
       <h2>Great job, <span id="resultName">friend</span>! 🎉</h2>
       <p class="result-subtitle" id="resultClass">Your game results</p>
       <div class="score-grid">
@@ -289,6 +297,9 @@
     let falling = [], basket = { x: 0, y: 0, targetX: 0, targetY: 0 }, lastFrame = 0, lastDetect = 0;
     let stageWidth = 0, stageHeight = 0, lastSecond = -1, previewDeadline = 0, toastTimer = null, transitionTimer = null, speechToken = 0;
     let keyboardControl = false;
+    let audioContext = null, musicGain = null, sfxGain = null, musicTimer = null, musicStep = 0, musicNextTime = 0, soundEnabled = true, lastCountdown = -1;
+    const MUSIC_MELODY = [523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,523.25,659.25,783.99,1046.5,493.88,587.33,783.99,659.25];
+    const MUSIC_BASS = [130.81,110,87.31,98];
 
     function showScreen(name) {
       Object.values(screens).forEach(s => s.classList.remove("active"));
@@ -311,6 +322,73 @@
     function showToast(message, duration = 1300) {
       const el = $("toast"); el.textContent = message; el.classList.add("show");
       clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), duration);
+    }
+    function ensureAudio() {
+      const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextConstructor) return false;
+      if (!audioContext) {
+        audioContext = new AudioContextConstructor();
+        musicGain = audioContext.createGain(); musicGain.gain.value = .55; musicGain.connect(audioContext.destination);
+        sfxGain = audioContext.createGain(); sfxGain.gain.value = .72; sfxGain.connect(audioContext.destination);
+      }
+      if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+      return true;
+    }
+    function playTone(frequency, when, duration, volume, type, output) {
+      if (!audioContext || !output) return;
+      const start = Math.max(when, audioContext.currentTime + .005);
+      const oscillator = audioContext.createOscillator(), envelope = audioContext.createGain();
+      oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, start);
+      envelope.gain.setValueAtTime(.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(volume, start + .018);
+      envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
+      oscillator.connect(envelope); envelope.connect(output);
+      oscillator.start(start); oscillator.stop(start + duration + .025);
+    }
+    function scheduleBackgroundMusic() {
+      if (!audioContext || !soundEnabled || audioContext.state !== "running") return;
+      const now = audioContext.currentTime;
+      if (musicNextTime < now - .25) musicNextTime = now + .03;
+      while (musicNextTime < now + .14) {
+        const step = musicStep % MUSIC_MELODY.length;
+        playTone(MUSIC_MELODY[step], musicNextTime, .19, .065, "triangle", musicGain);
+        if (step % 4 === 0) playTone(MUSIC_BASS[Math.floor(step / 4) % MUSIC_BASS.length], musicNextTime, .42, .026, "sine", musicGain);
+        musicStep++;
+        musicNextTime += .23;
+      }
+    }
+    function startBackgroundMusic() {
+      if (!soundEnabled || !ensureAudio()) return;
+      musicGain.gain.setTargetAtTime(.55, audioContext.currentTime, .16);
+      clearInterval(musicTimer); musicNextTime = audioContext.currentTime + .05;
+      musicTimer = setInterval(scheduleBackgroundMusic, 90);
+      scheduleBackgroundMusic();
+    }
+    function stopBackgroundMusic() {
+      clearInterval(musicTimer); musicTimer = null;
+      if (audioContext && musicGain) musicGain.gain.setTargetAtTime(.0001, audioContext.currentTime, .06);
+    }
+    function playSound(name, value = 0) {
+      if (!soundEnabled || !ensureAudio()) return;
+      const now = audioContext.currentTime + .01;
+      const sounds = {
+        catch: [[783.99,.08],[1046.5,.12]],
+        wrong: [[246.94,.12],[185,.16]],
+        success: [[523.25,.12],[659.25,.12],[783.99,.15],[1046.5,.22]],
+        timeout: [[698.46,.12],[523.25,.12],[392,.2]]
+      };
+      if (name === "countdown") {
+        playTone(value <= 3 ? 1046.5 : 783.99, now, .075, value <= 3 ? .1 : .065, "sine", sfxGain);
+        return;
+      }
+      (sounds[name] || []).forEach(([frequency,duration], i) => playTone(frequency, now + i * .105, duration, .12, "sine", sfxGain));
+    }
+    function updateSoundButton() {
+      const button = $("soundButton");
+      button.textContent = soundEnabled ? "🔊 Sound on" : "🔇 Sound off";
+      button.title = soundEnabled ? "Turn game sounds off" : "Turn game sounds on";
+      button.setAttribute("aria-pressed", String(soundEnabled));
+      button.classList.toggle("muted", !soundEnabled);
     }
     function setCameraStatus(message) { $("cameraStatus").textContent = message; }
     function renderSentence() {
@@ -345,7 +423,8 @@
     function startQuestion(index) {
       if (index >= QUESTIONS.length) { finishGame(); return; }
       questionIndex = index; nextWordIndex = 0; mistakes = 0; falling = []; active = false; transitioning = true; previewing = true;
-      questionStart = 0; deadline = 0; previewDeadline = performance.now() + 15000; lastSecond = -1;
+      questionStart = 0; deadline = 0; previewDeadline = performance.now() + 15000; lastSecond = -1; lastCountdown = -1;
+      $("finalCountdown").classList.remove("show");
       $("questionNumber").textContent = String(index + 1); $("timer").textContent = "--:--"; $("timer").classList.remove("urgent");
       renderDots(); renderSentence();
       const previewWords = [...QUESTIONS[index].words];
@@ -359,6 +438,7 @@
     function beginTimedQuestion() {
       previewing = false; active = true; transitioning = false;
       $("previewPanel").classList.remove("show");
+      $("finalCountdown").classList.remove("show"); lastCountdown = -1;
       questionStart = performance.now(); deadline = questionStart + 60000; lastSecond = -1;
       $("timer").textContent = "01:00"; $("timer").classList.remove("urgent");
       spawnWave();
@@ -373,6 +453,8 @@
       active = false; transitioning = true; falling = [];
       const seconds = Math.max(1, Math.round((performance.now() - questionStart) / 1000));
       results.push({ question: questionIndex + 1, correct: true, answer: QUESTIONS[questionIndex].answer, seconds, mistakes });
+      $("finalCountdown").classList.remove("show"); playSound("success");
+      if (audioContext && musicGain && soundEnabled) musicGain.gain.setTargetAtTime(.14, audioContext.currentTime, .08);
       $("successSentence").textContent = QUESTIONS[questionIndex].answer;
       $("successPanel").classList.add("show");
       transitionTimer = setTimeout(advanceAfterSuccess, 8000);
@@ -398,11 +480,13 @@
       speechToken++;
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       $("successPanel").classList.remove("show");
+      if (audioContext && musicGain && soundEnabled) musicGain.gain.setTargetAtTime(.55, audioContext.currentTime, .18);
       startQuestion(questionIndex + 1);
     }
     function timeoutQuestion() {
       if (!active) return;
       active = false; transitioning = true; falling = [];
+      $("finalCountdown").classList.remove("show"); playSound("timeout");
       results.push({ question: questionIndex + 1, correct: false, answer: QUESTIONS[questionIndex].answer, seconds: null, mistakes });
       showToast("Time's up! No point for this question.", 1400);
       transitionTimer = setTimeout(() => startQuestion(questionIndex + 1), 1500);
@@ -412,7 +496,9 @@
       if (word.correct && word.text.toLowerCase() === QUESTIONS[questionIndex].words[nextWordIndex].toLowerCase()) {
         nextWordIndex++; renderSentence(); falling = [];
         if (nextWordIndex >= QUESTIONS[questionIndex].words.length) completeQuestion();
+        else playSound("catch");
       } else {
+        playSound("wrong");
         resetCurrentAnswer();
       }
     }
@@ -501,6 +587,15 @@
         const remain = Math.max(0,(deadline-now)/1000);
         const shown = Math.ceil(remain);
         if (shown !== lastSecond) { $("timer").textContent = formatTime(remain); $("timer").classList.toggle("urgent", remain <= 10); lastSecond=shown; }
+        const countdown = $("finalCountdown");
+        if (remain > 0 && remain <= 10) {
+          const count = Math.ceil(remain);
+          if (count !== lastCountdown) {
+            countdown.textContent = String(count); countdown.setAttribute("aria-label", `${count} seconds remaining`);
+            countdown.classList.remove("show"); void countdown.offsetWidth; countdown.classList.add("show");
+            playSound("countdown", count); lastCountdown = count;
+          }
+        } else { countdown.classList.remove("show"); lastCountdown = -1; }
         if (remain <= 0) timeoutQuestion();
         for (const word of falling) word.y += word.speed * dt;
         for (let i=falling.length-1;i>=0;i--) {
@@ -524,6 +619,7 @@
     $("playerForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!event.currentTarget.reportValidity()) return;
+      updateSoundButton(); startBackgroundMusic();
       player.name = $("studentName").value.trim(); player.className = $("studentClass").value.trim();
       $("loadingCover").classList.add("show"); $("loadingText").textContent = "Opening the front camera…";
       showScreen("game"); resizeCanvas();
@@ -545,6 +641,13 @@
       if (!confirm("Start again from Question 1? Your current score and progress will be cleared.")) return;
       clearTimeout(transitionTimer); results=[]; falling=[]; speechToken++; if ("speechSynthesis" in window) window.speechSynthesis.cancel(); startQuestion(0); showToast("Starting again from Question 1!");
     });
+    $("soundButton").addEventListener("click", async () => {
+      soundEnabled = !soundEnabled; updateSoundButton();
+      if (soundEnabled) {
+        if (ensureAudio() && audioContext.state === "suspended") await audioContext.resume().catch(() => {});
+        startBackgroundMusic(); playSound("catch");
+      } else stopBackgroundMusic();
+    });
     $("continueButton").addEventListener("click", advanceAfterSuccess);
     stage.addEventListener("pointermove", event => {
       if (!trackingReady && stage.classList.contains("active")) { basket.targetX=event.clientX; basket.targetY=event.clientY; }
@@ -561,7 +664,7 @@
     function buildPayload() {
       const successful = results.filter(r=>r.correct);
       return {
-        game: "Word Catcher — English Year 2 Proaktif",
+        game: "Word Catcher — English Year 2",
         name: player.name,
         className: player.className,
         score: successful.length,
@@ -594,6 +697,7 @@
     }
     async function finishGame() {
       active=false; transitioning=false; falling=[]; stopCamera();
+      $("finalCountdown").classList.remove("show"); stopBackgroundMusic();
       const payload=buildPayload();
       $("resultName").textContent=player.name; $("resultClass").textContent=`Class ${player.className} · Thanks for playing!`;
       $("scoreValue").textContent=`${payload.score} / 7`;
