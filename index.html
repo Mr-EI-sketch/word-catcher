@@ -612,7 +612,7 @@
     $("copyResults").addEventListener("click", async () => {
       const text=makeResultText(buildPayload());
       try { await navigator.clipboard.writeText(text); $("copyResults").textContent="Copied ✓"; setTimeout(()=>$("copyResults").textContent="Copy results",1600); }
-      catch { window.prompt("Copy results ini:",text); }
+      catch { window.prompt("Copy these results:",text); }
     });
     $("playAgain").addEventListener("click", () => {
       results=[]; nextWordIndex=0; falling=[]; showScreen("welcome");
