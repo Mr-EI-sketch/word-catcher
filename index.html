@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -103,6 +103,22 @@
     .loading-box { max-width: 390px; border-radius: 26px; padding: 25px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); }
     .spinner { width: 42px; height: 42px; margin: 0 auto 14px; border: 4px solid rgba(255,255,255,.35); border-top-color: #ffd95b; border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .intermission-overlay { position: absolute; z-index: 7; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(38,25,79,.58); backdrop-filter: blur(7px); }
+    .intermission-overlay.show { display: flex; }
+    .intermission-card { width: min(100%,560px); border: 3px solid rgba(255,255,255,.8); border-radius: 28px; padding: clamp(22px,4vw,34px); background: #fffdf8; color: #35275f; text-align: center; box-shadow: 0 22px 65px rgba(18,10,48,.34); }
+    .intermission-kicker { color: #785bd0; font-size: .76rem; font-weight: 1000; letter-spacing: .11em; text-transform: uppercase; }
+    .intermission-card h2 { margin: 8px 0; color: #30205f; font-size: clamp(1.8rem,5vw,2.65rem); }
+    .intermission-card p { margin: 0 auto 17px; max-width: 440px; color: #625a7e; line-height: 1.5; }
+    .preview-words { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin: 18px 0 21px; }
+    .preview-word { padding: 10px 14px; border-radius: 13px; background: #e9f9f3; color: #287f6c; font-weight: 1000; box-shadow: 0 3px 0 #c3eee1; }
+    .preview-word:nth-child(3n+2) { background: #ffe5f0; color: #ad3f74; box-shadow: 0 3px 0 #ffd0e3; }
+    .preview-word:nth-child(3n) { background: #e9e3ff; color: #6845bd; box-shadow: 0 3px 0 #d8ceff; }
+    .preview-countdown { display: inline-block; border-radius: 99px; padding: 10px 17px; background: #fff2bf; color: #71531b; font-weight: 1000; }
+    .success-overlay { z-index: 8; }
+    .success-card { border-color: #ffe486; }
+    .success-star { font-size: 2.4rem; }
+    .success-sentence { margin: 15px 0 21px; border-radius: 17px; padding: 16px; background: #e9f9f3; color: #236f62; font-size: clamp(1.2rem,4vw,1.7rem); font-weight: 1000; line-height: 1.35; }
+    .success-card .primary-btn { min-width: 170px; }
 
     /* Results */
     #results { position: relative; overflow-y: auto; justify-content: center; align-items: center; padding: 24px 16px; background: linear-gradient(145deg,#6d44d8,#a95ed0 54%,#fa81ad); }
@@ -154,85 +170,104 @@
   </style>
 </head>
 <body>
-  <section id="welcome" class="screen active" aria-label="Mula permainan">
+  <section id="welcome" class="screen active" aria-label="Start the game">
     <div class="blob one"></div><div class="blob two"></div>
     <div class="welcome-card">
       <div>
         <div class="brand"><span class="brand-icon">🧺</span> English Year 2 Proaktif</div>
         <h1>Word<br><span>Catcher!</span></h1>
-        <p class="lead">Tangkap perkataan yang betul dan bina ayat tentang pekerjaan. Gerakkan kepala untuk mengawal bakul!</p>
+        <p class="lead">Catch the correct words to build sentences about jobs. Move your head to guide the basket!</p>
         <div class="hero-art" aria-hidden="true">
           <div class="hero-basket">🧺</div>
           <div class="word-cloud"><span>chef</span><span>teacher</span><span>police officer</span></div>
         </div>
       </div>
       <div class="game-rules">
-        <h2>🎯 Cara bermain</h2>
-        <div class="rule"><span class="rule-icon">👀</span><span>Benarkan akses kamera depan supaya bakul boleh ikut pergerakan kepala.</span></div>
-        <div class="rule"><span class="rule-icon">🧩</span><span>Tangkap perkataan seterusnya mengikut urutan ayat. Perkataan jatuh bersama pilihan yang salah.</span></div>
-        <div class="rule"><span class="rule-icon">🔄</span><span>Jika tersalah tangkap, ayat bermula semula. Masa tetap berjalan.</span></div>
-        <div class="rule"><span class="rule-icon">⏱️</span><span>Siapkan setiap soalan dalam masa 1 minit untuk mendapat 1 markah.</span></div>
+        <h2>🎯 How to play</h2>
+        <div class="rule"><span class="rule-icon">👀</span><span>Allow front camera access so the basket can follow your head.</span></div>
+        <div class="rule"><span class="rule-icon">🧩</span><span>Study the words for 15 seconds, then catch them in sentence order. Only words from this question will fall.</span></div>
+        <div class="rule"><span class="rule-icon">🔄</span><span>If you catch the wrong word, start the sentence again. The timer keeps running.</span></div>
+        <div class="rule"><span class="rule-icon">⏱️</span><span>Complete each question in 60 seconds to earn one point.</span></div>
       </div>
       <form id="playerForm" class="player-form">
-        <div class="field"><label for="studentName">Nama murid</label><input id="studentName" name="studentName" autocomplete="name" maxlength="60" placeholder="Contoh: Aina" required></div>
-        <div class="field"><label for="studentClass">Kelas</label><input id="studentClass" name="studentClass" maxlength="40" placeholder="Contoh: 2 Proaktif" required></div>
-        <button id="startButton" class="primary-btn" type="submit">Mula bermain ✨</button>
+        <div class="field"><label for="studentName">Student name</label><input id="studentName" name="studentName" autocomplete="name" maxlength="60" placeholder="Example: Aina" required></div>
+        <div class="field"><label for="studentClass">Class</label><input id="studentClass" name="studentClass" maxlength="40" placeholder="Example: 2 Proaktif" required></div>
+        <button id="startButton" class="primary-btn" type="submit">Start playing ✨</button>
       </form>
-      <p class="privacy-note"><strong>Privasi:</strong> Kamera digunakan untuk mengesan kedudukan kepala sahaja. Video tidak dirakam atau dihantar. Nama, kelas dan keputusan hanya dihantar jika pautan guru telah disambungkan.</p>
+      <p class="privacy-note"><strong>Privacy:</strong> Your camera is used only to track your head. Video is not recorded or sent. Your name, class and results are sent to the teacher after you finish.</p>
     </div>
   </section>
 
-  <section id="game" class="screen" aria-label="Permainan sedang berjalan">
+  <section id="game" class="screen" aria-label="Game in progress">
     <video id="cameraVideo" autoplay muted playsinline></video>
     <div id="videoShade"></div>
     <canvas id="gameCanvas" aria-hidden="true"></canvas>
     <div class="game-top">
       <div class="hud-card">
-        <div class="question-label">Soalan</div>
+        <div class="question-label">Question</div>
         <div class="question-number"><span id="questionNumber">1</span> / 7</div>
         <div class="progress-dots" id="progressDots" aria-hidden="true"></div>
       </div>
       <div class="hud-card timer-card">
-        <div class="timer-label">Masa</div><div id="timer">01:00</div>
+        <div class="timer-label">Time</div><div id="timer">01:00</div>
       </div>
       <div class="top-actions">
-        <div class="status-pill" id="cameraStatus">Menyambung kamera…</div>
-        <button class="reset-btn" id="resetButton" type="button" title="Mula semula dari soalan 1">↻ Reset</button>
+        <div class="status-pill" id="cameraStatus">Connecting camera…</div>
+        <button class="reset-btn" id="resetButton" type="button" title="Start again from Question 1">↻ Reset</button>
       </div>
     </div>
-    <div class="instruction-chip">Tangkap perkataan seterusnya dalam ayat 👇</div>
-    <div class="camera-hint" id="cameraHint">Pastikan muka kelihatan di kamera</div>
+    <div class="instruction-chip">Catch the next word in the sentence 👇</div>
+    <div class="camera-hint" id="cameraHint">Make sure your face is visible</div>
     <div id="toast" role="status" aria-live="polite"></div>
     <div class="sentence-panel">
-      <div class="sentence-caption">Ayat kamu</div>
+      <div class="sentence-caption">Your sentence</div>
       <div id="sentenceSlots" aria-live="polite"></div>
     </div>
+    <div id="previewPanel" class="intermission-overlay" aria-live="polite">
+      <div class="intermission-card preview-card">
+        <div class="intermission-kicker">Question preview</div>
+        <h2>Get ready! 👀</h2>
+        <p>These words will appear in this question. Look at them carefully.</p>
+        <div id="previewWords" class="preview-words"></div>
+        <div id="previewCountdown" class="preview-countdown">Starting in 15 seconds…</div>
+      </div>
+    </div>
+    <div id="successPanel" class="intermission-overlay success-overlay" aria-live="polite">
+      <div class="intermission-card success-card">
+        <div class="success-star" aria-hidden="true">⭐</div>
+        <div class="intermission-kicker">Sentence complete</div>
+        <h2>Well done!</h2>
+        <p>The correct sentence is:</p>
+        <div id="successSentence" class="success-sentence"></div>
+        <button id="continueButton" class="primary-btn" type="button">Continue →</button>
+      </div>
+    </div>
     <div id="loadingCover" class="loading-cover">
-      <div class="loading-box"><div class="spinner"></div><strong id="loadingText">Membuka kamera depan…</strong><p style="margin-bottom:0;color:#eee6ff">Pastikan tekan “Allow/Benarkan” apabila telefon meminta akses kamera.</p></div>
+      <div class="loading-box"><div class="spinner"></div><strong id="loadingText">Opening the front camera…</strong><p style="margin-bottom:0;color:#eee6ff">Tap “Allow” when your phone asks to use the camera.</p></div>
     </div>
   </section>
 
-  <section id="results" class="screen" aria-label="Keputusan permainan">
+  <section id="results" class="screen" aria-label="Game results">
     <div class="result-card">
       <div class="result-kicker">English Year 2 Proaktif · Word Catcher</div>
-      <h2>Hebat, <span id="resultName">kawan</span>! 🎉</h2>
-      <p class="result-subtitle" id="resultClass">Keputusan permainan kamu</p>
+      <h2>Great job, <span id="resultName">friend</span>! 🎉</h2>
+      <p class="result-subtitle" id="resultClass">Your game results</p>
       <div class="score-grid">
-        <div class="score-box"><small>Markah</small><strong id="scoreValue">0 / 7</strong></div>
-        <div class="score-box"><small>Masa terpantas</small><strong id="fastestValue">—</strong></div>
+        <div class="score-box"><small>Score</small><strong id="scoreValue">0 / 7</strong></div>
+        <div class="score-box"><small>Fastest time</small><strong id="fastestValue">—</strong></div>
       </div>
       <ul id="resultList" class="result-list"></ul>
-      <div id="deliveryBox" class="delivery-box">Menyediakan keputusan…</div>
+      <div id="deliveryBox" class="delivery-box">Preparing your results…</div>
       <div class="result-actions">
-        <button id="copyResults" class="secondary-btn" type="button">Salin keputusan</button>
-        <button id="playAgain" class="primary-btn" type="button">Main semula ↻</button>
+        <button id="copyResults" class="secondary-btn" type="button">Copy results</button>
+        <button id="playAgain" class="primary-btn" type="button">Play again ↻</button>
       </div>
-      <div class="footnote">Keputusan mengandungi nama, kelas, markah, masa dan status setiap soalan. Imej atau video kamera tidak disertakan.</div>
+      <div class="footnote">Your results include your name, class, score, time and answer for each question. Your camera video is not included.</div>
     </div>
   </section>
 
   <script type="module">
-    // URL Web App Google Apps Script untuk menghantar keputusan murid secara automatik.
+    // Google Apps Script Web App URL for automatic result delivery.
     const RESULTS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzHwXR2V6wgioPScLK2oolAEdR72N4GQAs27NurRHxXUZLsmM7q-o-RqO7xGaOv1Rww/exec";
 
     const QUESTIONS = [
@@ -244,16 +279,15 @@
       { words: ["He", "teaches", "every", "day"], answer: "He teaches every day." },
       { words: ["He", "saves", "people", "every", "day"], answer: "He saves people every day." }
     ];
-    const WORD_POOL = [...new Set(QUESTIONS.flatMap(q => q.words))];
     const $ = id => document.getElementById(id);
     const screens = { welcome: $("welcome"), game: $("game"), results: $("results") };
     const video = $("cameraVideo"), canvas = $("gameCanvas"), ctx = canvas.getContext("2d");
     const stage = $("game");
     let stream = null, landmarker = null, usingCamera = false, trackingReady = false;
     let player = { name: "", className: "" }, questionIndex = 0, questionStart = 0, deadline = 0;
-    let active = false, transitioning = false, results = [], nextWordIndex = 0, mistakes = 0;
+    let active = false, transitioning = false, previewing = false, results = [], nextWordIndex = 0, mistakes = 0;
     let falling = [], basket = { x: 0, y: 0, targetX: 0, targetY: 0 }, lastFrame = 0, lastDetect = 0;
-    let stageWidth = 0, stageHeight = 0, lastSecond = -1, toastTimer = null, transitionTimer = null;
+    let stageWidth = 0, stageHeight = 0, lastSecond = -1, previewDeadline = 0, toastTimer = null, transitionTimer = null, speechToken = 0;
     let keyboardControl = false;
 
     function showScreen(name) {
@@ -295,7 +329,7 @@
       for (let i = 0; i < 7; i++) { const d = document.createElement("i"); if (i < questionIndex) d.classList.add("done"); dots.appendChild(d); }
     }
     function chooseDistractors(expected) {
-      const options = WORD_POOL.filter(w => w.toLowerCase() !== expected.toLowerCase());
+      const options = QUESTIONS[questionIndex].words.filter(w => w.toLowerCase() !== expected.toLowerCase());
       for (let i = options.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [options[i], options[j]] = [options[j], options[i]]; }
       return options.slice(0, 2);
     }
@@ -310,17 +344,28 @@
     }
     function startQuestion(index) {
       if (index >= QUESTIONS.length) { finishGame(); return; }
-      questionIndex = index; nextWordIndex = 0; mistakes = 0; falling = []; active = true; transitioning = false;
-      questionStart = performance.now(); deadline = questionStart + 60000; lastSecond = -1;
-      $("questionNumber").textContent = String(index + 1); $("timer").textContent = "01:00"; $("timer").classList.remove("urgent");
+      questionIndex = index; nextWordIndex = 0; mistakes = 0; falling = []; active = false; transitioning = true; previewing = true;
+      questionStart = 0; deadline = 0; previewDeadline = performance.now() + 15000; lastSecond = -1;
+      $("questionNumber").textContent = String(index + 1); $("timer").textContent = "--:--"; $("timer").classList.remove("urgent");
       renderDots(); renderSentence();
-      $("cameraHint").textContent = trackingReady ? "Gerakkan kepala untuk gerakkan bakul 🧺" : "Gerakkan kursor atau gunakan kekunci anak panah untuk gerakkan bakul";
-      setCameraStatus(trackingReady ? "Kamera aktif · bakul ikut kepala" : "Mod kawalan alternatif");
+      const previewWords = [...QUESTIONS[index].words];
+      for (let i = previewWords.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [previewWords[i], previewWords[j]] = [previewWords[j], previewWords[i]]; }
+      const wordHolder = $("previewWords"); wordHolder.replaceChildren();
+      previewWords.forEach(word => { const chip = document.createElement("span"); chip.className = "preview-word"; chip.textContent = word; wordHolder.appendChild(chip); });
+      $("previewPanel").classList.add("show"); $("successPanel").classList.remove("show");
+      $("cameraHint").textContent = trackingReady ? "Move your head to guide the basket 🧺" : "Move your pointer or use the arrow keys to guide the basket";
+      setCameraStatus(trackingReady ? "Camera on · basket follows your head" : "Pointer or keyboard controls");
+    }
+    function beginTimedQuestion() {
+      previewing = false; active = true; transitioning = false;
+      $("previewPanel").classList.remove("show");
+      questionStart = performance.now(); deadline = questionStart + 60000; lastSecond = -1;
+      $("timer").textContent = "01:00"; $("timer").classList.remove("urgent");
       spawnWave();
     }
     function resetCurrentAnswer() {
       nextWordIndex = 0; mistakes++; falling = []; renderSentence();
-      showToast("Ops! Ayat direset. Masa masih berjalan.");
+      showToast("Oops! The sentence has been reset. The timer is still running.");
       spawnWave();
     }
     function completeQuestion() {
@@ -328,14 +373,38 @@
       active = false; transitioning = true; falling = [];
       const seconds = Math.max(1, Math.round((performance.now() - questionStart) / 1000));
       results.push({ question: questionIndex + 1, correct: true, answer: QUESTIONS[questionIndex].answer, seconds, mistakes });
-      showToast("Betul! Ayat berjaya dibina! ⭐", 1000);
-      transitionTimer = setTimeout(() => startQuestion(questionIndex + 1), 1150);
+      $("successSentence").textContent = QUESTIONS[questionIndex].answer;
+      $("successPanel").classList.add("show");
+      transitionTimer = setTimeout(advanceAfterSuccess, 8000);
+      speakSentence(QUESTIONS[questionIndex].answer);
+    }
+    function speakSentence(sentence) {
+      if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+      window.speechSynthesis.cancel();
+      const token = ++speechToken;
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.lang = "en-GB"; utterance.rate = .88; utterance.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      utterance.voice = voices.find(voice => voice.lang?.toLowerCase() === "en-gb") || voices.find(voice => voice.lang?.toLowerCase().startsWith("en-gb")) || null;
+      utterance.onend = () => {
+        if (token !== speechToken || !$("successPanel").classList.contains("show")) return;
+        clearTimeout(transitionTimer);
+        transitionTimer = setTimeout(advanceAfterSuccess, 1500);
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+    function advanceAfterSuccess() {
+      clearTimeout(transitionTimer);
+      speechToken++;
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      $("successPanel").classList.remove("show");
+      startQuestion(questionIndex + 1);
     }
     function timeoutQuestion() {
       if (!active) return;
       active = false; transitioning = true; falling = [];
       results.push({ question: questionIndex + 1, correct: false, answer: QUESTIONS[questionIndex].answer, seconds: null, mistakes });
-      showToast("Masa tamat. Soalan ini tiada markah.", 1400);
+      showToast("Time's up! No point for this question.", 1400);
       transitionTimer = setTimeout(() => startQuestion(questionIndex + 1), 1500);
     }
     function catchWord(word) {
@@ -375,7 +444,7 @@
       try {
         const detected = landmarker.detectForVideo(video, now);
         const face = detected.faceLandmarks?.[0];
-        if (!face) { $("cameraHint").textContent = "Pastikan muka kelihatan di kamera"; return; }
+        if (!face) { $("cameraHint").textContent = "Make sure your face is visible"; return; }
         const anchor = face[1] || face[10];
         const vw = video.videoWidth, vh = video.videoHeight;
         const scale = Math.max(stageWidth / vw, stageHeight / vh);
@@ -385,7 +454,7 @@
         const y = anchor.y * vh * scale + offsetY - 72;
         basket.targetX = Math.max(48, Math.min(stageWidth - 48, x));
         basket.targetY = Math.max(100, Math.min(stageHeight - 125, y));
-        $("cameraHint").textContent = "Gerakkan kepala untuk gerakkan bakul 🧺";
+        $("cameraHint").textContent = "Move your head to guide the basket 🧺";
       } catch (err) { /* keep the last stable basket position */ }
     }
     function drawBasket() {
@@ -441,6 +510,12 @@
         }
         if (active && falling.length===0) spawnWave();
       }
+      if (previewing) {
+        const remaining = Math.max(0, previewDeadline - now);
+        const seconds = Math.ceil(remaining / 1000);
+        $("previewCountdown").textContent = `Starting in ${seconds} second${seconds === 1 ? "" : "s"}…`;
+        if (remaining <= 0) beginTimedQuestion();
+      }
       falling.forEach(drawWord); drawBasket();
       requestAnimationFrame(render);
     }
@@ -450,16 +525,16 @@
       event.preventDefault();
       if (!event.currentTarget.reportValidity()) return;
       player.name = $("studentName").value.trim(); player.className = $("studentClass").value.trim();
-      $("loadingCover").classList.add("show"); $("loadingText").textContent = "Membuka kamera depan…";
+      $("loadingCover").classList.add("show"); $("loadingText").textContent = "Opening the front camera…";
       showScreen("game"); resizeCanvas();
       try {
-        if (!navigator.mediaDevices?.getUserMedia) throw new Error("Kamera tidak disokong oleh pelayar ini.");
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access is not supported in this browser.");
         usingCamera = await openCamera();
-        $("loadingText").textContent = trackingReady ? "Kamera sedia! Jom mula…" : "Kamera dibuka; kawalan alternatif sedia…";
+        $("loadingText").textContent = trackingReady ? "Camera ready! Get ready to play…" : "Camera opened; alternative controls are ready…";
       } catch (err) {
         console.warn("Camera access unavailable; starting alternate controls.", err);
         usingCamera = false; trackingReady = false;
-        $("loadingText").textContent = "Kamera tidak dapat dibuka. Permainan akan bermula dengan kawalan alternatif.";
+        $("loadingText").textContent = "The camera could not open. The game will start with alternative controls.";
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       $("loadingCover").classList.remove("show");
@@ -467,9 +542,10 @@
       results=[]; startQuestion(0);
     });
     $("resetButton").addEventListener("click", () => {
-      if (!confirm("Mula semula dari Soalan 1? Markah dan kemajuan sekarang akan dipadam.")) return;
-      clearTimeout(transitionTimer); results=[]; falling=[]; startQuestion(0); showToast("Bermula semula dari Soalan 1!");
+      if (!confirm("Start again from Question 1? Your current score and progress will be cleared.")) return;
+      clearTimeout(transitionTimer); results=[]; falling=[]; speechToken++; if ("speechSynthesis" in window) window.speechSynthesis.cancel(); startQuestion(0); showToast("Starting again from Question 1!");
     });
+    $("continueButton").addEventListener("click", advanceAfterSuccess);
     stage.addEventListener("pointermove", event => {
       if (!trackingReady && stage.classList.contains("active")) { basket.targetX=event.clientX; basket.targetY=event.clientY; }
     });
@@ -500,26 +576,26 @@
       const box=$("deliveryBox");
       if (!RESULTS_ENDPOINT.trim()) {
         box.classList.remove("sent");
-        box.textContent="Penghantaran automatik belum disambungkan. Tampal pautan Google Apps Script guru pada tetapan permainan untuk menghantar keputusan ke helaian guru.";
+        box.textContent="Automatic result delivery is not connected. Please tell your teacher.";
         return;
       }
-      box.textContent="Sedang menghantar keputusan kepada guru…";
+      box.textContent="Sending your results to the teacher…";
       try {
         await fetch(RESULTS_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(payload)});
-        box.classList.add("sent"); box.textContent="Keputusan telah dihantar kepada guru. ✅";
+        box.classList.add("sent"); box.textContent="Your results have been sent to the teacher. ✅";
       } catch (err) {
-        box.classList.remove("sent"); box.textContent="Keputusan belum berjaya dihantar. Cuba salin keputusan dan hantar kepada cikgu.";
+        box.classList.remove("sent"); box.textContent="Your results could not be sent. Copy them and send them to your teacher.";
       }
     }
     function makeResultText(payload) {
-      const lines=[`Word Catcher — ${payload.name} (${payload.className})`,`Markah: ${payload.score}/${payload.totalQuestions}`,`Masa terpantas: ${payload.fastestQuestionSeconds == null ? "Tiada" : payload.fastestQuestionSeconds + " saat"}`,"Jawapan:"];
-      payload.questions.forEach(r=>lines.push(`Soalan ${r.question}: ${r.correct ? "Betul — "+r.answer+" ("+r.seconds+" saat)" : "Tiada markah — masa tamat"}; reset: ${r.mistakes} kali`));
+      const lines=[`Word Catcher — ${payload.name} (${payload.className})`,`Score: ${payload.score}/${payload.totalQuestions}`,`Fastest time: ${payload.fastestQuestionSeconds == null ? "None" : payload.fastestQuestionSeconds + " seconds"}`,"Answers:"];
+      payload.questions.forEach(r=>lines.push(`Question ${r.question}: ${r.correct ? "Correct — "+r.answer+" ("+r.seconds+" seconds)" : "No point — time ran out"}; resets: ${r.mistakes}`));
       return lines.join("\n");
     }
     async function finishGame() {
       active=false; transitioning=false; falling=[]; stopCamera();
       const payload=buildPayload();
-      $("resultName").textContent=player.name; $("resultClass").textContent=`Kelas ${player.className} · Terima kasih kerana bermain!`;
+      $("resultName").textContent=player.name; $("resultClass").textContent=`Class ${player.className} · Thanks for playing!`;
       $("scoreValue").textContent=`${payload.score} / 7`;
       if (payload.fastestQuestionSeconds == null) $("fastestValue").textContent="—";
       else $("fastestValue").textContent=`${payload.fastestQuestionSeconds}s · S${results.find(r=>r.correct&&r.seconds===payload.fastestQuestionSeconds)?.question}`;
@@ -527,16 +603,16 @@
       results.forEach(r=>{
         const li=document.createElement("li"); li.className=`result-row${r.correct?" good":""}`;
         const badge=document.createElement("span"); badge.className="badge"; badge.textContent=r.correct?"✓":"–";
-        const label=document.createElement("span"); label.textContent=`Soalan ${r.question}: ${r.answer}`;
-        const time=document.createElement("strong"); time.textContent=r.correct?`${r.seconds}s · ${r.mistakes} reset`:`Masa tamat · ${r.mistakes} reset`;
+        const label=document.createElement("span"); label.textContent=`Question ${r.question}: ${r.answer}`;
+        const time=document.createElement("strong"); time.textContent=r.correct?`${r.seconds}s · ${r.mistakes} resets`:`Time's up · ${r.mistakes} resets`;
         li.append(badge,label,time); list.appendChild(li);
       });
       showScreen("results"); await sendResults(payload);
     }
     $("copyResults").addEventListener("click", async () => {
       const text=makeResultText(buildPayload());
-      try { await navigator.clipboard.writeText(text); $("copyResults").textContent="Disalin ✓"; setTimeout(()=>$("copyResults").textContent="Salin keputusan",1600); }
-      catch { window.prompt("Salin keputusan ini:",text); }
+      try { await navigator.clipboard.writeText(text); $("copyResults").textContent="Copied ✓"; setTimeout(()=>$("copyResults").textContent="Copy results",1600); }
+      catch { window.prompt("Copy results ini:",text); }
     });
     $("playAgain").addEventListener("click", () => {
       results=[]; nextWordIndex=0; falling=[]; showScreen("welcome");
