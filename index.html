@@ -192,7 +192,7 @@
         <h2>🎯 How to play</h2>
         <div class="rule"><span class="rule-icon">👀</span><span>Allow front camera access so the basket can follow your head.</span></div>
         <div class="rule"><span class="rule-icon">🧩</span><span>Study the words for 15 seconds, then catch them in sentence order. Only words from this question will fall.</span></div>
-        <div class="rule"><span class="rule-icon">🔄</span><span>If you catch the wrong word, start the sentence again. The timer keeps running.</span></div>
+        <div class="rule"><span class="rule-icon">🔄</span><span>If you catch the wrong word, start the sentence again and lose 5 seconds.</span></div>
         <div class="rule"><span class="rule-icon">⏱️</span><span>Complete each question in 60 seconds to earn one point.</span></div>
       </div>
       <form id="playerForm" class="player-form">
@@ -444,8 +444,8 @@
       spawnWave();
     }
     function resetCurrentAnswer() {
-      nextWordIndex = 0; mistakes++; falling = []; renderSentence();
-      showToast("Oops! The sentence has been reset. The timer is still running.");
+      nextWordIndex = 0; mistakes++; falling = []; deadline -= 5000; renderSentence();
+      showToast("Oops! The sentence has been reset. 5 seconds have been taken off the timer.", 1800);
       spawnWave();
     }
     function completeQuestion() {
@@ -531,13 +531,13 @@
         const detected = landmarker.detectForVideo(video, now);
         const face = detected.faceLandmarks?.[0];
         if (!face) { $("cameraHint").textContent = "Make sure your face is visible"; return; }
-        const anchor = face[1] || face[10];
+        const anchor = face[10] || face[1];
         const vw = video.videoWidth, vh = video.videoHeight;
         const scale = Math.max(stageWidth / vw, stageHeight / vh);
         const offsetX = (stageWidth - vw * scale) / 2;
         const offsetY = (stageHeight - vh * scale) / 2;
         const x = (1 - anchor.x) * vw * scale + offsetX;
-        const y = anchor.y * vh * scale + offsetY - 72;
+        const y = anchor.y * vh * scale + offsetY + 18;
         basket.targetX = Math.max(48, Math.min(stageWidth - 48, x));
         basket.targetY = Math.max(100, Math.min(stageHeight - 125, y));
         $("cameraHint").textContent = "Move your head to guide the basket 🧺";
